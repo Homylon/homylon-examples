@@ -1,0 +1,63 @@
+// Homylon Scene FrontDoor
+// Somebody at the front door. Who hears about it, and how, depends on who is home.
+
+define home jensenhouse latitude 52.09 longitude 5.12
+
+// The lamps and the motion sensor by the door come from the Hue agent, the doorbell sound
+// from the Sound agent (soundmachine). Both announce themselves, so they need no definition.
+
+sub red by FF0000
+sub warmwhite by FFD8A0
+
+// Who is home. Mark and Sophie flip a switch on their phone when they leave and come back;
+// Emma has the holiday switch.
+markhome = yes
+sophiehome = yes
+holiday = no
+
+when remote marksphone switch athome = on then markhome = yes
+when remote marksphone switch athome = off then markhome = no
+when remote sophiesphone switch athome = on then sophiehome = yes
+when remote sophiesphone switch athome = off then sophiehome = no
+when remote emmasphone switch holiday = on then holiday = yes
+when remote emmasphone switch holiday = off then holiday = no
+
+when motion on frontdoorsensor then
+
+    // On holiday: no light show, no doorbell, one quiet message
+    if holiday then
+        send notification @"Someone is at the front door, and we are on holiday" to emma
+    else
+
+        // After dark the porch light greets the visitor for two minutes
+        if time between sunset and sunrise then
+            light porchlight on warmwhite brightness 100 duration 120
+        end
+
+        // Mark cannot hear the bell: at home he sees it, away it taps his wrist
+        if markhome then
+            light hallwayceiling, studylamp on red blink 5 alert duration 15
+        else
+            send urgent notification @"Someone is at the front door" to mark
+        end
+
+        // Sophie hears the bell. At night it must not wake the children, and on
+        // Sunday morning the house sleeps in: then the bedroom lamp comes on softly
+        if sophiehome then
+            if time between 22:00 and 07:00 then
+                light bedroomlamp on warmwhite brightness 10 fade 2 duration 60
+            else
+                if sunday and time < 10:00 then
+                    light bedroomlamp on warmwhite brightness 30 fade 2 duration 60
+                else
+                    sound dingdong on soundmachine
+                end
+            end
+        end
+
+        // Nobody home: Mark already knows, so Sophie gets the message too
+        if not markhome and not sophiehome then
+            send notification @"Someone was at the front door, and nobody is home" to sophie
+        end
+    end
+end

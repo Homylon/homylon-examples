@@ -1,0 +1,47 @@
+// Homylon Scene SunUpSunDown
+// Curtains and lights that follow the sun, all year round, without a single clock time to change.
+
+define home jensenhouse latitude 52.09 longitude 5.12    # the Engine needs this for sunrise and sunset
+
+// The lamps come from the Hue agent and the curtains from the Matter agent. Both announce
+// themselves, so they need no definition here.
+
+sub warmwhite by FFD8A0
+define room livingroom lights sofalamp, readinglamp, diningtable
+
+holiday = no
+
+// The evening: half an hour before sunset, when it gets dim indoors, the lamps come on.
+// At sunset the curtains close and the porch light goes on
+when time sunset - 30 then light livingroom on warmwhite brightness 40 fade 10
+
+when time sunset then
+    close curtain livingcurtains, diningcurtains
+    light porchlight on warmwhite brightness 60
+end
+
+// Bedtime: the porch light goes out
+when time 23:30 then light porchlight off
+
+// The morning: on weekdays the house wakes at 07:00. When the sun is not up yet,
+// the lamps come on gently; the curtains wait for the sun
+when time 07:00 and monday, tuesday, wednesday, thursday, friday then
+    if time < sunrise then
+        light livingroom on warmwhite brightness 30 fade 30
+    end
+end
+
+// At sunrise the curtains open, unless the family is away: then they stay closed
+// an hour longer, so the house does not open up while nobody is there to see it
+when time sunrise then
+    if not holiday then
+        open curtain livingcurtains, diningcurtains
+    else
+        after 3600 do
+            open curtain livingcurtains, diningcurtains
+        end
+    end
+end
+
+// Half an hour after sunrise it is light enough indoors: the lamps go out
+when time sunrise + 30 then light livingroom off fade 30

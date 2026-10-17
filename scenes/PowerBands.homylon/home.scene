@@ -1,0 +1,23 @@
+// Homylon Scene PowerBands
+// One lamp tells the house at a glance whether it is taking power from the grid or delivering
+// power back to it (solar panels), and how much.
+define home jensenhouse latitude 52.09 longitude 5.12
+
+// A small agent reads the smart meter and reports the sensor grid in watts: positive when the
+// house takes power, negative when it delivers. The kitchen lamp comes from the Hue agent,
+// which announces itself.
+define agent energymeter address 192.168.1.45 port 55196 protocol udp
+define sensor grid type power on energymeter
+
+sub blue by 0000FF
+sub green by 00FF00
+sub orange by FF8000
+sub red by FF0000
+
+delivering = -250      # more than 250 W back to the grid
+taking = 250           # more than 250 W from the grid
+
+when power grid < delivering then light kitchenlamp on blue brightness 60
+when power grid >= delivering and power grid < 0 then light kitchenlamp on green brightness 60
+when power grid >= 0 and power grid <= taking then light kitchenlamp on orange brightness 40
+when power grid > taking then light kitchenlamp on red brightness 40
